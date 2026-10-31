@@ -1,0 +1,90 @@
+// demographic table day1//
+
+
+libname table "C:\Users\Haritha\Downloads\demog table\demog table";
+data adsl;
+set table.adsl;
+run;
+/**/
+/*data adsl01;*/
+/*set adsl;*/
+/*where usubjid sex race ethnic age trt01 saffl;*/
+/*where saffl='y';*/
+run;
+proc sql;
+create table adsl01 as select usubjid,
+                              sex,
+							  race,
+							  ethnic,
+							  age,
+							  trt01a
+							  from adsl where saffl='Y';
+							  quit;
+data class;
+set sashelp.class;
+output;
+sex='H';
+output;
+run;
+
+data dm01;
+set adsl01;
+output;
+trt01a='overall';
+output;
+run;
+
+/*Analysis for age variable*/
+proc means data=dm01 noprint;
+var age;
+class trt01a;
+output out=stats01 (drop=_type_ _freq_ where=(trt01a ne ""))
+                 n=_n
+                 mean= _mean
+                 median= _median
+                 std= _std
+                  min= _min
+                  max= _max;
+run;
+
+data stas02;
+set stats01; 
+n=put(_n,z2.);
+meansd=put(_mean,7.1)|| "("||strip(put(_std,8.2))||")" ;
+median=put(_median,7.1);
+minmax=put(_min,z2.)||","||put(_max,z2.);
+drop _:;
+run;
+/*mock shell book*/
+/*decimal precession rule*/
+collected age: 23 37
+                  min           23
+				                27
+				  max           38
+
+				  mean 88/3=29.3
+				  median xx.x
+				  std xx.xxxx;
+
+proc transpose data=stas02 out=stats03;
+var n meansd median minmax;
+run;
+
+data stats04;
+length _name_$50;
+set stats03;
+if _name_='n' then _name_="N";
+else if _name_='meansd' then _name_='Mean(SD)';
+else if _name_='median' then _name_='mean';
+else if _name_='minmax' then _name_='minmax';
+run;
+
+data agelabel;
+_name_='Age(Years)';
+run;
+
+data agefinal;
+length _name_$50;
+set agelabel stats04;
+if _N_ gt 1 then _name_="  "||_name_;
+run;
